@@ -151,14 +151,15 @@ void button_handler(struct Button* handle)
 		} else if(handle->ticks > SHORT_TICKS) { //released timeout
 			if(handle->repeat == 1) {
 				handle->event = (uint8_t)SINGLE_CLICK;
-				EVENT_CB(handle);
+				// EVENT_CB(handle);
 			} else if(handle->repeat == 2) {
 				handle->event = (uint8_t)DOUBLE_CLICK;
-        EVENT_CB(handle);
+        		// EVENT_CB(handle);
 			}else if(handle->repeat > 2) {
 				handle->event = (uint8_t)PRESS_REPEAT;
-        EVENT_CB(handle);
+        		// EVENT_CB(handle);
 			}
+			EVENT_CB(handle);
 			handle->state = 0;
 		}
 		break;
