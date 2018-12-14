@@ -2,9 +2,7 @@
  * Copyright (c) 2016 Zibin Zheng <znbin@qq.com>
  * All rights reserved
  */
- /*
-	modified by https://github.com/konosubakonoakua
- */
+ 
 #ifndef _MULTI_BUTTON_H_
 #define _MULTI_BUTTON_H_
 

@@ -1,19 +1,21 @@
 #include "multi_button.h"
 
-struct Button btn1;
+New_Button(btn1, 1);
 
-uint8_t read_button1_GPIO() 
+uint8_t Multi_Button_Read_Callback(uint8_t id) 
 {
-	return HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
+	switch(id)
+	{
+		case 1:
+			return HAL_GPIO_ReadPin(B2_GPIO_Port, B2_Pin);
+	}
 }
 
 
-int main()
+int _main()
 {
 	static uint8_t btn1_event_val;
-	
-	button_init(&btn1, read_button1_GPIO, 0);
-	button_start(&btn1);
+	button_init_and_start(&btn1,0);
 	
 	//make the timer invoking the button_ticks() interval 5ms.
 	//This function is implemented by yourself.

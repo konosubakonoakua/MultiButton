@@ -2,9 +2,7 @@
  * Copyright (c) 2016 Zibin Zheng <znbin@qq.com>
  * All rights reserved
  */
- /*
-	modified by https://github.com/konosubakonoakua
- */
+
 #include "multi_button.h"
 // #define EVENT_CB(ev)   if(handle->cb[ev])handle->cb[ev]((Button*)handle)
 #define EVENT_CB(__handle__)   Multi_Button_Event_Callback(__handle__)
@@ -148,17 +146,24 @@ void button_handler(struct Button* handle)
 			EVENT_CB(handle); // repeat hit
 			handle->ticks = 0;
 			handle->state = 3;
+//            if(handle->state = 3 && handle->repeat == 2)
+//            {
+//                handle->event = (uint8_t)DOUBLE_CLICK;
+//                EVENT_CB(handle);
+//                handle->state = 0;
+//                handle->repeat = 0;
+//            }
 		} else if(handle->ticks > SHORT_TICKS) { //released timeout
 			if(handle->repeat == 1) {
 				handle->event = (uint8_t)SINGLE_CLICK;
-				EVENT_CB(handle);
+//				EVENT_CB(handle);
 			} else if(handle->repeat == 2) {
 				handle->event = (uint8_t)DOUBLE_CLICK;
-        EVENT_CB(handle);
+//        EVENT_CB(handle);
 			}else if(handle->repeat > 2) {
 				handle->event = (uint8_t)PRESS_REPEAT;
-        EVENT_CB(handle);
 			}
+            EVENT_CB(handle);
 			handle->state = 0;
 		}
 		break;

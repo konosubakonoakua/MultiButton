@@ -1,32 +1,53 @@
-# MultiButton
+# MultiButton修改版
 
 ## 简介
 MultiButton 是一个小巧简单易用的事件驱动型按键驱动模块，可无限量扩展按键，按键事件的回调异步处理方式可以简化你的程序结构，去除冗余的按键处理硬编码，让你的按键业务逻辑更清晰。
 
+修改内容：
+
+- 新增全局回调函数
+- 添加语法糖
+- 实现连续按键后触发连按事件
+- 新增keil5工程
+
 ## 使用方法
 1.先申请一个按键结构
 
+```c
+New_Button(btn1, 1); // btn1 是名字，1是编号
+/* 宏实现 #define New_Button(__name__, __id__) Button __name__ = {__id__} */
+/*此时就有了一个名字叫 btn1 的全局变量 */
 ```
-struct Button button1;
+2.新增两个全局回调函数，请用户自己实现这两个函数，定义函数时一定要把 __weak 去掉啊！
+
+```c
+/**
+  * @brief  Global Event CallBack func
+  * @param  button id & event id
+  * @retval None
+  */
+__weak void Multi_Button_Event_Callback(Button* handle)
+{
+	// do your own business
+}
+
+/**
+  * @brief  Global Read CallBack func
+  * @param  button id
+  * @retval button level
+  */
+__weak uint8_t Multi_Button_Read_Callback(Button* handle)
+{
+	// do your own business
+	return 1; // !active_level
+}
 ```
-2.初始化按键对象，绑定按键的GPIO电平读取接口**read_button_pin()** ，后一个参数设置有效触发电平
+3.初始化并启动按键对象，后一个参数设置有效触发电平
 
 ```
-button_init(&button1, read_button_pin, 0);
+button_start_and_start(&button1, 0);
 ```
-3.注册按键事件
-
-```
-button_attach(&button1, SINGLE_CLICK, Callback_SINGLE_CLICK_Handler);
-button_attach(&button1, DOUBLE_CLICK, Callback_DOUBLE_Click_Handler);
-...
-```
-4.启动按键
-
-```
-button_start(&button1);
-```
-5.设置一个5ms间隔的定时器循环调用后台处理函数
+4.设置一个5ms间隔的定时器循环调用后台处理函数
 
 ```
 while(1) {
@@ -43,8 +64,9 @@ while(1) {
 
 MultiButton 使用C语言实现，基于面向对象方式设计思路，每个按键对象单独用一份数据结构管理：
 
-```
+```c
 struct Button {
+    uint8_t id;
 	uint16_t ticks;
 	uint8_t  repeat: 4;
 	uint8_t  event : 4;
@@ -52,8 +74,8 @@ struct Button {
 	uint8_t  debounce_cnt : 3; 
 	uint8_t  active_level : 1;
 	uint8_t  button_level : 1;
-	uint8_t  (*hal_button_Level)(void);
-	BtnCallback  cb[number_of_event];
+	// uint8_t  (*hal_button_Level)(void);
+	// BtnCallback  cb[number_of_event];
 	struct Button* next;
 };
 ```
@@ -75,46 +97,133 @@ LONG_PRESS_HOLD | 长按期间一直触发
 
 ## Examples
 
-```
-#include "button.h"
+```c
+#include "multi_button.h"
+#include "stm32f1xx_hal.h"
+#include "main.h"
 
-struct Button btn1;
+New_Button(btn1, 1); // btn1 是名字，1是编号
+New_Button(btn2, 2);
 
-int read_button1_GPIO() 
+int _main()
 {
-	return HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
-}
+	... // 初始化代码，省略
+	button_init_and_start(&btn1, 0);
+	button_init_and_start(&btn2, 0);
+	HAL_TIM_Base_Start_IT(&htim4);
 
-int main()
-{
-	button_init(&btn1, read_button1_GPIO, 0);
-	button_attach(&btn1, PRESS_DOWN,       BTN1_PRESS_DOWN_Handler);
-	button_attach(&btn1, PRESS_UP,         BTN1_PRESS_UP_Handler);
-	button_attach(&btn1, PRESS_REPEAT,     BTN1_PRESS_REPEAT_Handler);
-	button_attach(&btn1, SINGLE_CLICK,     BTN1_SINGLE_Click_Handler);
-	button_attach(&btn1, DOUBLE_CLICK,     BTN1_DOUBLE_Click_Handler);
-	button_attach(&btn1, LONG_RRESS_START, BTN1_LONG_RRESS_START_Handler);
-	button_attach(&btn2, LONG_PRESS_HOLD,  BTN1_LONG_PRESS_HOLD_Handler);
-	button_start(&btn1);
-	
 	//make the timer invoking the button_ticks() interval 5ms.
 	//This function is implemented by yourself.
-	__timer_start(button_ticks, 0, 5); 
+	__timer_start(button_ticks, 0, 5); // 在5ms中断里面调用button_ticks()
 	
 	while(1) 
 	{}
 }
 
-void BTN1_PRESS_DOWN_Handler(void* btn)
+// IO电平读取回调函数
+/**
+  * @brief  Global Read CallBack func
+  * @param  button id
+  * @retval button level
+  */
+uint8_t Multi_Button_Read_Callback(Button* handle)
 {
-	//do something...
+	switch(handle->id)
+	{
+		case 1:
+			return HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin);
+		case 2:
+			return HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY2_Pin);
+    default:
+      return 1; //off
+	}
 }
-
-void BTN1_PRESS_UP_Handler(void* btn)
+// 事件处理回调函数
+/**
+  * @brief  Global Event CallBack func
+  * @param  button id & event id
+  * @retval None
+  */
+void Multi_Button_Event_Callback(Button* handle)
 {
-	//do something...
-}
+	// do your own business
+	switch(handle->event)
+	{
+		case PRESS_DOWN:
+		{}break;
+		case PRESS_UP:
+    	{}break;
+		case PRESS_REPEAT:
+    	{
+			switch(handle->id)
+			{
+				case 1:
+				nrf_send(">>>btn1 repeated: ", 18);
+				uint8_t i = handle->repeat + 0x30;
+				nrf_send(&i, 1);
+			led_ctrl(1, 1);
+				break;
+				case 2:
+				nrf_send(">>>btn2 repeated: ", 18);
+				uint8_t j = handle->repeat + 0x30;
+				nrf_send(&j, 1);
+				led_ctrl(2, 1);
+				break;
+			}
 
-...
+    	}break;
+		case SINGLE_CLICK:
+    	{
+			switch(handle->id)
+			{
+				case 1:
+				nrf_send("button1 single click  ", 22);
+				led_ctrl(1, 0);
+				break;
+				case 2:
+				nrf_send("button2 single click  ", 22);
+				led_ctrl(2, 0);
+				break;
+			}
+		}break;
+		case DOUBLE_CLICK:
+    	{
+			switch(handle->id)
+			{
+				case 1:
+				nrf_send("button1 double click  ", 22);
+				led_ctrl(1, 1);
+				break;
+				case 2:
+				nrf_send("button2 double click  ", 22);
+				led_ctrl(2, 1);
+				break;
+			}
+    	}break;
+		case LONG_PRESS_HOLD:
+    	{}break;
+		case LONG_RRESS_START:
+    	{
+			switch(handle->id)
+			{
+				case 1:
+				nrf_send("button1 long press  ", 20);
+				led_blink(1);
+				break;
+				case 2:
+				nrf_send("button2 long press  ", 20);
+				led_blink(2);
+				break;
+			}
+    	}break;
+		default:
+			break;
+	}
+}
 ```
 
+## 工程截图
+
+数据采用nrf24l01传回
+
+![data](./examples/data.png)
