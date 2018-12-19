@@ -227,3 +227,7 @@ void Multi_Button_Event_Callback(Button* handle)
 数据采用nrf24l01传回
 
 ![data](./examples/data.png)
+
+测试用电路板如下，PCB工程[请戳我](https://lceda.cn/account/project?project=73bbfed130434af19c09a9cee9e483ce)
+
+![](./examples/brd.png)
