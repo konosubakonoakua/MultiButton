@@ -228,6 +228,6 @@ void Multi_Button_Event_Callback(Button* handle)
 
 ![data](./examples/data.png)
 
-测试用电路板如下，PCB工程[请戳我](https://lceda.cn/account/project?project=73bbfed130434af19c09a9cee9e483ce)
+测试用电路板如下，PCB工程[请戳我](https://lceda.cn/akua/stm32f103c8t6-board)
 
 ![](./examples/brd.png)
